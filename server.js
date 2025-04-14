@@ -29,7 +29,8 @@ const client = new MongoClient(uri, {
 
 connectDB();
 
-app.use(express.json()); // To parse incoming JSON requests
+app.use(express.json()); // for raw JSON bodies
+app.use(express.urlencoded({ extended: true })); // for form-style bodies
 
 app.get('/api/blogs', async (req, res) => {
     try {
