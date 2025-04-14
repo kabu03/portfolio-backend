@@ -64,6 +64,7 @@ app.post('/api/blogs', async (req, res) => {
         slug: slug,
         body: req.body.body?.trim() || null,
         image: req.body.image || null,
+        category: req.body.category?.trim().toLowerCase() || null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
