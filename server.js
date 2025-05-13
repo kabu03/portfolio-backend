@@ -7,7 +7,7 @@ const app = express();
 
 app.use(cors({
   origin: 'https://kabu03.github.io',
-  methods: 'GET,POST',
+  methods: 'GET,POST,PUT',
   credentials: true
 }));
 
