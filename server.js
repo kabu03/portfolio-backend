@@ -101,6 +101,61 @@ app.get('/api/blogs/:slug', async (req, res) => {
     }
 });
 
+// UPDATE a blog post by slug
+app.put('/api/blogs/:slug', async (req, res) => {
+    try {
+        // 1. Check the provided password
+        if (req.body.pw !== process.env.SECRET_PW) {
+            return res.status(403).json({ error: "Unauthorized: incorrect password" });
+        }
+
+        const database = client.db("blog-db");
+        const blogsCollection = database.collection("blogs");
+        const originalSlug = req.params.slug;
+
+        // Basic validation
+        if (!req.body.title || !req.body.body) {
+            return res.status(400).json({ error: "Title and body are required fields" });
+        }
+
+        // If title changes, slug might need to change.
+        // Your current slug generation:
+        const newSlug = req.body.title
+            ?.toLowerCase()
+            .replace(/ /g, "-") // Replace spaces with hyphens
+            .replace(/[^\w-]+/g, ""); // Replace non-alphanumeric characters except hyphens
+
+        const updatedBlogData = {
+            title: req.body.title?.trim(),
+            slug: newSlug, // Update the slug if title changed
+            body: req.body.body?.trim(),
+            image: req.body.image || null,
+            category: req.body.category?.trim().toLowerCase() || null,
+            updatedAt: new Date(),
+            // createdAt should remain unchanged, so we don't include it here from req.body
+        };
+
+        const result = await blogsCollection.updateOne(
+            { slug: originalSlug },
+            { $set: updatedBlogData }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ error: 'Blog not found with the original slug' });
+        }
+        if (result.modifiedCount === 0 && result.matchedCount === 1) {
+            // This can happen if the submitted data is identical to the existing data
+            return res.status(200).json({ message: "Blog data was the same, no changes made.", slug: newSlug });
+        }
+
+        res.status(200).json({ message: "Blog updated successfully", slug: newSlug });
+
+    } catch (err) {
+        console.error('Error updating blog:', err);
+        res.status(500).json({ error: 'Failed to update blog' });
+    }
+});
+
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
